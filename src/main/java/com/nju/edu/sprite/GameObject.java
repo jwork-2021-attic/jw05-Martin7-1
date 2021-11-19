@@ -91,13 +91,6 @@ public abstract class GameObject {
         this.y += dy;
     }
 
-    /**
-     * 在游戏的每帧被调用
-     */
-    public void onTick() {
-
-    }
-
     public int getX() {
         return this.x;
     }

@@ -11,44 +11,30 @@ import java.util.concurrent.Executors;
  * @author Zyi
  */
 public class GameScreen extends JFrame {
-
-    public static GameScreen GAME_SCREEN;
-
-    private GameController gameController;
     /**
      * 用一个单独线程池来管理fps
      */
     private ExecutorService render = Executors.newSingleThreadExecutor();
+    private static final int WIDTH = 1920;
+    private static final int HEIGHT = 1080;
+    private GameController gameController = new GameController();
 
-    private GameScreen(String windowTitle, int fps, Color bgColor) {
+    private final String windowTitle;
+    private final Color bgColor;
+
+    public GameScreen(String windowTitle, int fps, Color bgColor) {
         this.windowTitle = windowTitle;
         this.fps = fps;
         this.bgColor = bgColor;
 
-        this.gameController = GameController.getGameController();
-
         createScreen();
-        this.render.submit(new RenderThread(this));
-        gameController.setFocusable(true);
-        gameController.requestFocus();
+        this.render.execute(new RenderThread(this));
+        this.gameController.setFocusable(true);
+        this.gameController.requestFocus();
         this.add(gameController, BorderLayout.CENTER);
-    }
 
-    /**
-     * 单例模式
-     * @return 唯一的游戏屏幕对象
-     */
-    public static GameScreen getGameScreen() {
-        if (GAME_SCREEN == null) {
-            GAME_SCREEN = new GameScreen("CalabashGame", 30, Color.BLACK);
-        }
-        return GAME_SCREEN;
+        render.shutdown();
     }
-
-    private static final int WIDTH = 1920;
-    private static final int HEIGHT = 1080;
-    private final String windowTitle;
-    private final Color bgColor;
 
     /**
      * frame per second

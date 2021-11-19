@@ -41,43 +41,27 @@ public class Calabash extends Sprite {
      */
     public int HP = 100;
 
-    @Override
-    public void onTick() {
-        // 监听一下键盘的事件
-        if (Input.getKeyDown(KeyEvent.VK_W) || Input.getKeyDown(KeyEvent.VK_UP)) {
-            // 向上走y值减小
-            // 判断会不会走出边界
-            if (this.y - speed >= 0) {
-                this.transfer(0, -1 * speed);
-            }
-        } else if (Input.getKeyDown(KeyEvent.VK_S) || Input.getKeyDown(KeyEvent.VK_DOWN)) {
-            // 向下走y值增大
-            // 判断会不会走出边界
-            if (this.y + speed + height <= GameScreen.getHei()) {
-                this.transfer(0, speed);
-            }
-        } else if (Input.getKeyDown(KeyEvent.VK_A) || Input.getKeyDown(KeyEvent.VK_LEFT)) {
-            // 向左走x值减小
-            // 判断会不会走出边界
-            if (this.x - speed >= 0) {
-                this.transfer(-1 * speed, 0);
-            }
-        } else if (Input.getKeyDown(KeyEvent.VK_D) || Input.getKeyDown(KeyEvent.VK_RIGHT)) {
-            // 向右走x值增大
-            // 判断会不会走出边界
-            if (this.x + speed + width <= GameScreen.getWid()) {
-                this.transfer(speed, 0);
-            }
-        } else if (Input.getKeyDown(KeyEvent.VK_J)) {
-            // 按j发射子弹
-            addBullet(calabashFire());
-        } else if (Input.getKeyDown(KeyEvent.VK_ENTER)) {
-            if (GameController.STATE == GameState.START) {
-                GameController.setState(GameState.RUNNING);
-            } else if (GameController.STATE == GameState.GAME_OVER) {
-                GameController.setState(GameState.RUNNING);
-                // TODO:restart
-            }
+    public void moveUp() {
+        if (this.y - speed >= 0) {
+            this.y -= speed;
+        }
+    }
+
+    public void moveDown() {
+        if (this.y + speed <= GameScreen.getHei()) {
+            this.y += speed;
+        }
+    }
+
+    public void moveLeft() {
+        if (this.x - speed >= 0) {
+            this.x -= speed;
+        }
+    }
+
+    public void moveRight() {
+        if (this.x + speed >= GameScreen.getWid()) {
+            this.x += speed;
         }
     }
 
@@ -104,11 +88,5 @@ public class Calabash extends Sprite {
 
     public void resetHP() {
         this.HP = 100;
-    }
-
-    private void addBullet(CalabashBullet bullet) {
-        GameController gameController = GameController.getGameController();
-        List<CalabashBullet> calabashBulletList = gameController.getCalabashBulletList();
-        calabashBulletList.add(bullet);
     }
 }
