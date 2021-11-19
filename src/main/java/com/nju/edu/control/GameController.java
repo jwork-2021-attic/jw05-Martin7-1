@@ -6,6 +6,7 @@ import com.nju.edu.screen.GameScreen;
 import com.nju.edu.screen.RenderThread;
 import com.nju.edu.sprite.*;
 import com.nju.edu.util.GameState;
+import com.nju.edu.util.ReadImage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,9 +23,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class GameController extends JPanel implements Runnable {
 
-    public static GameController GAME_CONTROLLER = new GameController();
+    public static GameController GAME_CONTROLLER;
 
     public static GameController getGameController() {
+        if (GAME_CONTROLLER == null) {
+            GAME_CONTROLLER = new GameController();
+        }
         return GAME_CONTROLLER;
     }
 
@@ -39,11 +43,7 @@ public class GameController extends JPanel implements Runnable {
     /**
      * 游戏的状态
      */
-    private static GameState STATE = GameState.START;
-    /**
-     * 用一个单独线程池来管理fps
-     */
-    private ExecutorService render = Executors.newSingleThreadExecutor();
+    public static GameState STATE = GameState.START;
     /**
      * 用一个线程池来管理妖精的出现
      */
@@ -52,22 +52,30 @@ public class GameController extends JPanel implements Runnable {
     private JLabel scoreLabel;
     private JLabel HPLabel;
 
-    private Calabash calabash = Calabash.getCalabash();
-    private List<MonsterOne> monsterOneList = new ArrayList<>();
-    private List<MonsterTwo> monsterTwoList = new ArrayList<>();
-    private List<MonsterThree> monsterThreeList = new ArrayList<>();
-    private List<MonsterBullet> monsterBulletList = new ArrayList<>();
-    private List<CalabashBullet> calabashBulletList = new ArrayList<>();
+    private Calabash calabash;
+    private List<MonsterOne> monsterOneList;
+    private List<MonsterTwo> monsterTwoList;
+    private List<MonsterThree> monsterThreeList;
+    private List<MonsterBullet> monsterBulletList;
+    private List<CalabashBullet> calabashBulletList;
 
     private boolean isExited = false;
-    Input input = new Input();
+    Input input;
 
     private GameController() {
+        this.input = new Input();
+        this.monsterOneList = new ArrayList<>();
+        this.monsterTwoList = new ArrayList<>();
+        this.monsterThreeList = new ArrayList<>();
+        this.monsterBulletList = new ArrayList<>();
+        this.calabashBulletList = new ArrayList<>();
+        this.calabash = Calabash.getCalabash();
+
         input.init();
         this.addKeyListener(input);
 
         resetBoard();
-        this.render.submit(new RenderThread(GameScreen.getGameScreen()));
+
         executor.submit(this);
         executor.submit(new MonsterThread());
         executor.submit(new CalabashThread());
@@ -95,7 +103,7 @@ public class GameController extends JPanel implements Runnable {
         }
     }
 
-    private void restart() {
+    public void restart() {
         this.monsterOneList.clear();
         this.monsterTwoList.clear();
         this.monsterThreeList.clear();
@@ -267,7 +275,61 @@ public class GameController extends JPanel implements Runnable {
 
     @Override
     public void paint(Graphics g) {
+        // TODO: 绘制所有物体
+        super.paint(g);
+        // 如果为初始状态
+        if (STATE == GameState.START) {
+            // TODO:开始界面
+            // paintStart(g);
+            // 如果为游戏运行状态
+        } else if (STATE == GameState.RUNNING) {
+            // 绘制英雄机
+            paintCalabash(g);
+            // 绘制敌机
+            paintMonster(g);
+            // 绘制一组敌机子弹
+            paintMonsterBullets(g);
+            // 绘制英雄机子弹
+            paintCalabashBullets(g);
+        } else if (STATE == GameState.PAUSE) {
+            g.setFont(new Font("黑体", Font.BOLD, 50));
+            g.setColor(Color.RED);
+            g.drawString("游戏暂停!!!", 120, 330);
+        }
+    }
 
+    private void paintCalabash(Graphics g) {
+        g.drawImage(ReadImage.Calabash, calabash.getX(), calabash.getY(), 100, 100, null);
+    }
+
+    private void paintMonster(Graphics g) {
+        for (MonsterOne monsterOne : this.monsterOneList) {
+            monsterOne.draw(g);
+        }
+
+        for (MonsterTwo monsterTwo : this.monsterTwoList) {
+            monsterTwo.draw(g);
+        }
+
+        for (MonsterThree monsterThree : this.monsterThreeList) {
+            monsterThree.draw(g);
+        }
+    }
+
+    private void paintCalabashBullets(Graphics g) {
+        for (CalabashBullet bullet : this.calabashBulletList) {
+            bullet.draw(g);
+        }
+    }
+
+    private void paintMonsterBullets(Graphics g) {
+        for (MonsterBullet bullet : this.monsterBulletList) {
+            bullet.draw(g);
+        }
+    }
+
+    public static void setState(GameState state) {
+        STATE = state;
     }
 
     public void setMonsterOneList(MonsterOne monster) {

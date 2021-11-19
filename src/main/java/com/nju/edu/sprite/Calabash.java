@@ -4,6 +4,7 @@ import com.nju.edu.bullet.CalabashBullet;
 import com.nju.edu.control.GameController;
 import com.nju.edu.control.Input;
 import com.nju.edu.screen.GameScreen;
+import com.nju.edu.util.GameState;
 import com.nju.edu.util.ReadImage;
 
 import java.awt.event.KeyEvent;
@@ -15,10 +16,13 @@ import java.util.List;
  */
 public class Calabash extends Sprite {
 
-    public static Calabash player = new Calabash(0, GameScreen.getWid());
+    public static Calabash player;
 
     public static Calabash getCalabash() {
         // 单例模式，只有一个player
+        if (player == null) {
+            player = new Calabash(0, GameScreen.getWid());
+        }
         return player;
     }
 
@@ -67,6 +71,13 @@ public class Calabash extends Sprite {
         } else if (Input.getKeyDown(KeyEvent.VK_J)) {
             // 按j发射子弹
             addBullet(calabashFire());
+        } else if (Input.getKeyDown(KeyEvent.VK_ENTER)) {
+            if (GameController.STATE == GameState.START) {
+                GameController.setState(GameState.RUNNING);
+            } else if (GameController.STATE == GameState.GAME_OVER) {
+                GameController.setState(GameState.RUNNING);
+                // TODO:restart
+            }
         }
     }
 

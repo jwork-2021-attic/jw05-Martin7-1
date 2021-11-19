@@ -1,27 +1,34 @@
 package com.nju.edu.screen;
 
 import com.nju.edu.control.GameController;
-import com.nju.edu.control.Input;
-import com.nju.edu.sprite.GameObject;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Zyi
  */
 public class GameScreen extends JFrame {
 
-    public static GameScreen GAME_SCREEN = new GameScreen("CalabashGame", 30, Color.BLACK);
+    public static GameScreen GAME_SCREEN;
+
+    private GameController gameController;
+    /**
+     * 用一个单独线程池来管理fps
+     */
+    private ExecutorService render = Executors.newSingleThreadExecutor();
 
     private GameScreen(String windowTitle, int fps, Color bgColor) {
         this.windowTitle = windowTitle;
         this.fps = fps;
         this.bgColor = bgColor;
 
+        this.gameController = GameController.getGameController();
+
         createScreen();
+        this.render.submit(new RenderThread(this));
         gameController.setFocusable(true);
         gameController.requestFocus();
         this.add(gameController, BorderLayout.CENTER);
@@ -32,13 +39,15 @@ public class GameScreen extends JFrame {
      * @return 唯一的游戏屏幕对象
      */
     public static GameScreen getGameScreen() {
+        if (GAME_SCREEN == null) {
+            GAME_SCREEN = new GameScreen("CalabashGame", 30, Color.BLACK);
+        }
         return GAME_SCREEN;
     }
 
     private static final int WIDTH = 1920;
     private static final int HEIGHT = 1080;
     private final String windowTitle;
-    private GameController gameController = GameController.getGameController();
     private final Color bgColor;
 
     /**
@@ -55,10 +64,6 @@ public class GameScreen extends JFrame {
         setVisible(true);
         setResizable(false);
     }
-
-//    public void addGameObject(GameObject gameObject) {
-//        this.gameObjects.add(gameObject);
-//    }
 
     public void exit() {
         System.exit(1);
