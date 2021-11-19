@@ -19,18 +19,18 @@ import java.util.concurrent.Executors;
 /**
  * @author Zyi
  */
-public class GameController extends JPanel {
+public class GameController extends JPanel implements Runnable {
 
     public static GameController GAME_CONTROLLER = new GameController();
 
     /**
+     * 游戏的时间
+     */
+    private static long TIME = 0;
+    /**
      * 游戏的分数
      */
     private int score = 0;
-    /**
-     * 葫芦娃的血量
-     */
-    private int calabashHP = 100;
     /**
      * 游戏的状态
      */
@@ -39,6 +39,10 @@ public class GameController extends JPanel {
      * 用一个单独线程池来管理fps
      */
     private ExecutorService render = Executors.newSingleThreadExecutor();
+    /**
+     * 用一个线程池来管理妖精的出现
+     */
+    private ExecutorService monsters = Executors.newCachedThreadPool();
 
     private JLabel scoreLabel;
     private JLabel bombLabel;
@@ -53,9 +57,18 @@ public class GameController extends JPanel {
 
     private GameController() {
         this.render.submit(new RenderThread(GameScreen.getGameScreen()));
+        this.monsters.submit(new MonsterThread());
         Input input = new Input();
         input.init();
         this.addKeyListener(input);
+
+
+    }
+
+    @Override
+    public void run() {
+        // 检测妖精的子弹是否碰到葫芦娃
+        // 检测葫芦娃的子弹是否碰到妖精
     }
 
     public static GameController getGameController() {
@@ -74,6 +87,14 @@ public class GameController extends JPanel {
         this.monsterThreeList.add(monster);
     }
 
+    public void setMonsterBulletList(MonsterBullet monsterBullet) {
+        this.monsterBulletList.add(monsterBullet);
+    }
+
+    public void setCalabashBulletList(CalabashBullet calabashBullet) {
+        this.calabashBulletList.add(calabashBullet);
+    }
+
     public List<MonsterOne> getMonsterOneList() {
         return this.monsterOneList;
     }
@@ -84,5 +105,17 @@ public class GameController extends JPanel {
 
     public List<MonsterThree> getMonsterThreeList() {
         return this.monsterThreeList;
+    }
+
+    public List<MonsterBullet> getMonsterBulletList() {
+        return this.monsterBulletList;
+    }
+
+    public List<CalabashBullet> getCalabashBulletList() {
+        return this.calabashBulletList;
+    }
+
+    public static Long getTime() {
+        return TIME;
     }
 }

@@ -13,16 +13,27 @@ import java.awt.image.BufferedImage;
  */
 public class Calabash extends Sprite {
 
-    public Calabash(int x, int y) {
-        super(x, y, 100, 100, ReadImage.Calabash);
-        this.speed = 4;
+    public static Calabash player = new Calabash(0, GameScreen.getWid());
+
+    public static Calabash getInstance() {
+        // 单例模式，只有一个player
+        return player;
     }
 
-    public Calabash(int x, int y, int speed) {
+    private Calabash(int x, int y) {
+        super(x, y, 100, 100, ReadImage.Calabash);
+        this.speed = 10;
+    }
+
+    private Calabash(int x, int y, int speed) {
         super(x, y, 100, 100, ReadImage.Calabash);
         this.speed = speed;
     }
 
+    /**
+     * 葫芦娃的血量
+     */
+    public int HP = 100;
 
     @Override
     public void onTick() {
@@ -57,5 +68,13 @@ public class Calabash extends Sprite {
     public CalabashBullet calabashFire() {
         CalabashBullet bullet = new CalabashBullet(this.x + width, this.y + height / 2);
         return bullet;
+    }
+
+    public int getHP() {
+        return this.HP;
+    }
+
+    public void decreaseHP(int damage) {
+        this.HP -= damage;
     }
 }
