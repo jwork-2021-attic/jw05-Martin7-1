@@ -1,12 +1,14 @@
 package com.nju.edu.sprite;
 
 import com.nju.edu.bullet.CalabashBullet;
+import com.nju.edu.control.GameController;
 import com.nju.edu.control.Input;
 import com.nju.edu.screen.GameScreen;
 import com.nju.edu.util.ReadImage;
 
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 /**
  * @author Zyi
@@ -15,7 +17,7 @@ public class Calabash extends Sprite {
 
     public static Calabash player = new Calabash(0, GameScreen.getWid());
 
-    public static Calabash getInstance() {
+    public static Calabash getCalabash() {
         // 单例模式，只有一个player
         return player;
     }
@@ -62,6 +64,9 @@ public class Calabash extends Sprite {
             if (this.x + speed + width <= GameScreen.getWid()) {
                 this.transfer(speed, 0);
             }
+        } else if (Input.getKeyDown(KeyEvent.VK_J)) {
+            // 按j发射子弹
+            addBullet(calabashFire());
         }
     }
 
@@ -70,11 +75,29 @@ public class Calabash extends Sprite {
         return bullet;
     }
 
+    /**
+     * 获得当前Calabash的血量
+     * @return 血量
+     */
     public int getHP() {
         return this.HP;
     }
 
+    /**
+     * 受到伤害减少血量
+     * @param damage 伤害
+     */
     public void decreaseHP(int damage) {
         this.HP -= damage;
+    }
+
+    public void resetHP() {
+        this.HP = 100;
+    }
+
+    private void addBullet(CalabashBullet bullet) {
+        GameController gameController = GameController.getGameController();
+        List<CalabashBullet> calabashBulletList = gameController.getCalabashBulletList();
+        calabashBulletList.add(bullet);
     }
 }

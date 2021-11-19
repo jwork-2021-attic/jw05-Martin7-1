@@ -5,6 +5,7 @@ import com.nju.edu.screen.GameScreen;
 import com.nju.edu.sprite.MonsterOne;
 import com.nju.edu.sprite.MonsterThree;
 import com.nju.edu.sprite.MonsterTwo;
+import com.nju.edu.util.GameState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,8 @@ public class MonsterThread implements Runnable {
     private List<MonsterThree> monsterThreeList = new ArrayList<>();
     private List<MonsterBullet> monsterBulletList = new ArrayList<>();
 
+    private boolean isExied = false;
+
     public MonsterThread() {
         this.monsterOneList = gameController.getMonsterOneList();
         this.monsterTwoList = gameController.getMonsterTwoList();
@@ -37,7 +40,19 @@ public class MonsterThread implements Runnable {
 
     @Override
     public void run() {
-
+        while (!isExied) {
+            long time = GameController.getTime();
+            if (GameController.getState() == GameState.RUNNING) {
+                // 妖精的移动
+                monsterMove(time);
+                // 妖精子弹的移动
+                monsterBulletMove(time);
+                // 妖精出现
+                monsterAppear(time);
+                // 妖精发射子弹
+                monsterFire(time);
+            }
+        }
     }
 
     private void monsterMove(long time) {
