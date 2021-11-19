@@ -1,13 +1,15 @@
 package com.nju.edu.sprite;
 
-import java.awt.image.BufferedImage;
+import com.nju.edu.bullet.MonsterBullet;
 
 /**
  * @author Zyi
  */
-public class Monster extends Sprite{
+public interface Monster {
 
-    public Monster(int x, int y, int width, int height, BufferedImage image) {
-        super(x, y, width, height, image);
-    }
+    /**
+     * 怪物发射子弹
+     * @return 子弹
+     */
+    MonsterBullet monsterFire();
 }

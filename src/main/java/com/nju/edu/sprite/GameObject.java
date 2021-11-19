@@ -8,10 +8,25 @@ import java.awt.image.BufferedImage;
  */
 public abstract class GameObject {
 
+    /**
+     * 物体的x坐标
+     */
     protected int x;
+    /**
+     * 物体的y坐标
+     */
     protected int y;
+    /**
+     * 物体的宽度
+     */
     protected int width;
+    /**
+     * 物体的高度
+     */
     protected int height;
+    /**
+     * 物体的图片
+     */
     BufferedImage image;
 
     public GameObject(int x, int y, int width, int height, BufferedImage image) {
@@ -25,7 +40,7 @@ public abstract class GameObject {
     /**
      * 游戏物体的移动
      */
-    public abstract void move();
+    public abstract void move(long time);
 
     /**
      * 渲染此GameObject
@@ -35,7 +50,13 @@ public abstract class GameObject {
 
     }
 
-    public static boolean isDead(GameObject g1, GameObject g2) {
+    /**
+     * 判断两个游戏物体是否相碰
+     * @param g1 游戏物体1
+     * @param g2 游戏物体2
+     * @return true if the two gameObject is collided, false otherwise
+     */
+    public static boolean isCollide(GameObject g1, GameObject g2) {
         //step1: 求出两个矩形的中心点
         int f1x = g1.x + g1.width / 2;
         int f1y = g1.y + g1.height / 2;
