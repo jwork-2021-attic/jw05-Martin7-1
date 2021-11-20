@@ -13,7 +13,7 @@ public class CalabashBullet extends Sprite {
 
     public CalabashBullet(int x, int y) {
         super(x, y, 26, 26, ReadImage.CalabashBullet);
-        this.speed = 4;
+        this.speed = 10;
     }
 
     @Override

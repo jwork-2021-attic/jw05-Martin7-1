@@ -4,8 +4,6 @@ import com.nju.edu.bullet.MonsterBullet;
 import com.nju.edu.screen.GameScreen;
 import com.nju.edu.util.ReadImage;
 
-import java.awt.image.BufferedImage;
-
 /**
  * @author Zyi
  */
@@ -14,8 +12,8 @@ public class MonsterTwo extends Sprite implements Monster {
     private boolean isGoAhead = true;
 
     public MonsterTwo(int x, int y) {
-        super(x, y, 100, 100, ReadImage.MonsterTwo);
-        this.speed = 4;
+        super(x, y, 150, 150, ReadImage.MonsterTwo);
+        this.speed = 1;
     }
 
     public MonsterTwo(int x, int y, int speed) {
@@ -28,7 +26,7 @@ public class MonsterTwo extends Sprite implements Monster {
         // MonsterTwo的设定是会上下移动
         this.x -= speed;
         if (isGoAhead) {
-            if (this.y + speed <= GameScreen.getHei() - 100) {
+            if (this.y + speed <= GameScreen.getHei() - 200) {
                 this.y += speed;
             } else {
                 isGoAhead = false;

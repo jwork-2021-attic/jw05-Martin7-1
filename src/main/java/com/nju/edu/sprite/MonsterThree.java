@@ -19,6 +19,16 @@ public class MonsterThree extends Sprite implements Monster {
     }
 
     @Override
+    public void move(long time) {
+        // 游戏的怪物都是从左边向右边走的
+        // monsterThree的设定就是越走越快
+        this.x -= speed;
+        if (time % 6000 == 0) {
+            speed++;
+        }
+    }
+
+    @Override
     public MonsterBullet monsterFire() {
         MonsterBullet bullet = new MonsterBullet(this.x, this.y + height / 2);
 

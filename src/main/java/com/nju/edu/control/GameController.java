@@ -11,6 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -33,7 +35,7 @@ public class GameController extends JPanel implements Runnable {
     /**
      * 游戏的状态
      */
-    public static GameState STATE = GameState.RUNNING;
+    public static GameState STATE = GameState.START;
     /**
      * 用一个线程池来管理妖精的出现
      */
@@ -58,9 +60,9 @@ public class GameController extends JPanel implements Runnable {
         this.monsterThreeList = new ArrayList<>();
         this.monsterBulletList = new ArrayList<>();
         this.calabashBulletList = new ArrayList<>();
-        this.calabash = new Calabash(0, 0);
 
         this.addKeyListener(calabashThread);
+        this.requestFocus();
 
         resetBoard();
 
@@ -87,7 +89,7 @@ public class GameController extends JPanel implements Runnable {
         }
     }
 
-    private void monsterCollision() {
+    private synchronized void monsterCollision() {
         // 检查妖精1是否被葫芦娃打到
         // 敌方没有血量，直接死亡
         // TODO: 这里三个循环可以抽象一个方法
@@ -158,7 +160,7 @@ public class GameController extends JPanel implements Runnable {
         }
     }
 
-    private void calabashCollision() {
+    private synchronized void calabashCollision() {
         // 妖精子弹和葫芦娃的碰撞
         int monsterBulletLength = monsterBulletList.size();
         for (int i = 0; i < monsterBulletLength; i++) {
@@ -238,7 +240,9 @@ public class GameController extends JPanel implements Runnable {
             } else if (getKeyDown(KeyEvent.VK_J)) {
                 // 按j发射子弹
                 CalabashBullet bullet = calabash.calabashFire();
-                calabashBulletList.add(bullet);
+                if (TIME % 80 == 0) {
+                    calabashBulletList.add(bullet);
+                }
             } else if (getKeyDown(KeyEvent.VK_ENTER)) {
                 if (GameController.STATE == GameState.START) {
                     STATE = GameState.RUNNING;
@@ -332,12 +336,12 @@ public class GameController extends JPanel implements Runnable {
             }
         }
 
-        private static final int FIRE_INTERVAL_ONE = 3000;
-        private static final int FIRE_INTERVAL_TWO = 4000;
-        private static final int FIRE_INTERVAL_THREE = 4000;
-        private static final int MONSTER_ONE_APPEAR = 2000;
-        private static final int MONSTER_TWO_APPEAR = 2000;
-        private static final int MONSTER_THREE_APPEAR = 1000;
+        private static final int FIRE_INTERVAL_ONE = 4000;
+        private static final int FIRE_INTERVAL_TWO = 6000;
+        private static final int FIRE_INTERVAL_THREE = 15000;
+        private static final int MONSTER_ONE_APPEAR = 3000;
+        private static final int MONSTER_TWO_APPEAR = 4000;
+        private static final int MONSTER_THREE_APPEAR = 8000;
 
         /**
          * 妖精发射子弹的时间
@@ -346,20 +350,26 @@ public class GameController extends JPanel implements Runnable {
         private void monsterFire(long time) {
             if (time % FIRE_INTERVAL_ONE == 0) {
                 for (MonsterOne monsterOne : monsterOneList) {
-                    MonsterBullet monsterBullet = monsterOne.monsterFire();
-                    monsterBulletList.add(monsterBullet);
+                    if (isInGameScreen(monsterOne)) {
+                        MonsterBullet monsterBullet = monsterOne.monsterFire();
+                        monsterBulletList.add(monsterBullet);
+                    }
                 }
             }
             if (time % FIRE_INTERVAL_TWO == 0) {
                 for (MonsterTwo monsterTwo : monsterTwoList) {
-                    MonsterBullet monsterBullet = monsterTwo.monsterFire();
-                    monsterBulletList.add(monsterBullet);
+                    if (isInGameScreen(monsterTwo)) {
+                        MonsterBullet monsterBullet = monsterTwo.monsterFire();
+                        monsterBulletList.add(monsterBullet);
+                    }
                 }
             }
             if (time % FIRE_INTERVAL_THREE == 0) {
                 for (MonsterThree monsterThree : monsterThreeList) {
-                    MonsterBullet monsterBullet = monsterThree.monsterFire();
-                    monsterBulletList.add(monsterBullet);
+                    if (isInGameScreen(monsterThree)) {
+                        MonsterBullet monsterBullet = monsterThree.monsterFire();
+                        monsterBulletList.add(monsterBullet);
+                    }
                 }
             }
         }
@@ -372,19 +382,23 @@ public class GameController extends JPanel implements Runnable {
             Random random = new Random();
             // 妖精一出现的时间
             if (time % MONSTER_ONE_APPEAR == 0) {
-                MonsterOne monsterOne = new MonsterOne(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 100));
+                MonsterOne monsterOne = new MonsterOne(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 200));
                 monsterOneList.add(monsterOne);
             }
             // 妖精二出现的时间
             if (time % MONSTER_TWO_APPEAR == 0) {
-                MonsterTwo monsterTwo = new MonsterTwo(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 100));
+                MonsterTwo monsterTwo = new MonsterTwo(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 200));
                 monsterTwoList.add(monsterTwo);
             }
             if (time % MONSTER_THREE_APPEAR == 0) {
-                MonsterThree monsterThree = new MonsterThree(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 150));
+                MonsterThree monsterThree = new MonsterThree(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 200));
                 monsterThreeList.add(monsterThree);
             }
         }
+    }
+
+    private boolean isInGameScreen(GameObject gameObject) {
+        return gameObject.getX() + 150 <= GameScreen.getWid() && gameObject.getY() + 150 <= GameScreen.getHei();
     }
 
     public void restart() {
@@ -403,6 +417,9 @@ public class GameController extends JPanel implements Runnable {
         // 清空JPanel里的所有内容
         this.removeAll();
         this.addKeyListener(calabashThread);
+
+        // 葫芦娃的初始位置
+        calabash = new Calabash(0, 320);
 
         // 初始化一些Label
         scoreLabel = new JLabel("Score: " + this.score);
@@ -450,7 +467,18 @@ public class GameController extends JPanel implements Runnable {
     }
 
     private synchronized void addTime() {
-        TIME += 40;
+        TIME += 20;
+    }
+
+    /**
+     * 绘制游戏时的背景
+     * @param g
+     */
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        BufferedImage bgImage = ReadImage.runningBackground;
+        g.drawImage(bgImage, 0, 0, 1080, 680, null);
     }
 
     @Override
@@ -472,19 +500,27 @@ public class GameController extends JPanel implements Runnable {
             paintCalabashBullets(g);
         } else if (STATE == GameState.PAUSE) {
             g.setFont(new Font("黑体", Font.BOLD, 50));
-            g.setColor(Color.RED);
-            g.drawString("游戏暂停!!!", 400, 400);
+            g.setColor(Color.WHITE);
+            g.drawString("游戏暂停!!!", 400, 350);
+        } else if (STATE == GameState.GAME_OVER) {
+            // paintOver(g);
         }
     }
 
     public void paintStart(Graphics g) {
+        g.drawImage(ReadImage.startBackground, 0, 0, 1080, 680, null);
+        // g.drawImage(ReadImage.Title, 420, 340, null);
         Font font = new Font("黑体", Font.PLAIN, 20);
-        g.setColor(Color.RED);
+        g.setColor(Color.WHITE);
         g.setFont(font);
         g.drawString("按ENTER键开始游戏", 50, 500);
         g.drawString("J:发射子弹", 50, 550);
         g.drawString("方向键:↑,↓,←,→", 50, 600);
         g.drawString("作者:Martin", 50, 650);
+    }
+
+    public void paintOver(Graphics g) {
+
     }
 
     private void paintCalabash(Graphics g) {

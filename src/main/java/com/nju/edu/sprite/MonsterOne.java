@@ -3,8 +3,6 @@ package com.nju.edu.sprite;
 import com.nju.edu.bullet.MonsterBullet;
 import com.nju.edu.util.ReadImage;
 
-import java.awt.image.BufferedImage;
-
 /**
  * @author Zyi
  */
@@ -12,7 +10,7 @@ public class MonsterOne extends Sprite implements Monster {
 
     public MonsterOne(int x, int y) {
         super(x, y, 100, 100, ReadImage.MonsterOne);
-        this.speed = 4;
+        this.speed = 2;
     }
 
     public MonsterOne(int x, int y, int speed) {

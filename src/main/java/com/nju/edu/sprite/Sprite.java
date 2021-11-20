@@ -9,7 +9,6 @@ import java.awt.image.BufferedImage;
 public class Sprite extends GameObject {
 
     protected int speed;
-    protected int hp;
 
     public Sprite(int x, int y, int width, int height, BufferedImage image) {
         super(x, y, width, height, image);

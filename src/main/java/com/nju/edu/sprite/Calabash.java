@@ -1,15 +1,8 @@
 package com.nju.edu.sprite;
 
 import com.nju.edu.bullet.CalabashBullet;
-import com.nju.edu.control.GameController;
-import com.nju.edu.control.Input;
 import com.nju.edu.screen.GameScreen;
-import com.nju.edu.util.GameState;
 import com.nju.edu.util.ReadImage;
-
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
-import java.util.List;
 
 /**
  * @author Zyi
@@ -38,7 +31,7 @@ public class Calabash extends Sprite {
     }
 
     public void moveDown() {
-        if (this.y + speed <= GameScreen.getHei()) {
+        if (this.y + speed <= GameScreen.getHei() - 150) {
             this.y += speed;
         }
     }
@@ -50,7 +43,7 @@ public class Calabash extends Sprite {
     }
 
     public void moveRight() {
-        if (this.x + speed <= GameScreen.getWid()) {
+        if (this.x + speed <= GameScreen.getWid() - 150) {
             this.x += speed;
         }
     }
