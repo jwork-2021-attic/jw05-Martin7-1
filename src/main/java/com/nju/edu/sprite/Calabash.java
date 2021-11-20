@@ -16,17 +16,7 @@ import java.util.List;
  */
 public class Calabash extends Sprite {
 
-    public static Calabash player;
-
-    public static Calabash getCalabash() {
-        // 单例模式，只有一个player
-        if (player == null) {
-            player = new Calabash(0, GameScreen.getWid());
-        }
-        return player;
-    }
-
-    private Calabash(int x, int y) {
+    public Calabash(int x, int y) {
         super(x, y, 100, 100, ReadImage.Calabash);
         this.speed = 10;
     }
@@ -60,7 +50,7 @@ public class Calabash extends Sprite {
     }
 
     public void moveRight() {
-        if (this.x + speed >= GameScreen.getWid()) {
+        if (this.x + speed <= GameScreen.getWid()) {
             this.x += speed;
         }
     }

@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
 public class MonsterOne extends Sprite implements Monster {
 
     public MonsterOne(int x, int y) {
-        super(x, y, 40, 40, ReadImage.MonsterOne);
+        super(x, y, 100, 100, ReadImage.MonsterOne);
         this.speed = 4;
     }
 

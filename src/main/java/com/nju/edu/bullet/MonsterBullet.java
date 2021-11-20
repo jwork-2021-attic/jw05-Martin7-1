@@ -9,9 +9,11 @@ import com.nju.edu.util.ReadImage;
 public class MonsterBullet extends Sprite {
 
     private final int interval = 20;
+    private int speed;
 
     public MonsterBullet(int x, int y) {
         super(x, y, 26, 26, ReadImage.MonsterBullet);
+        this.speed = 4;
     }
 
     @Override

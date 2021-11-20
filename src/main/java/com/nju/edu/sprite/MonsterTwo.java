@@ -14,8 +14,8 @@ public class MonsterTwo extends Sprite implements Monster {
     private boolean isGoAhead = true;
 
     public MonsterTwo(int x, int y) {
-        super(x, y, 40, 40, ReadImage.MonsterTwo);
-        this.speed = 10;
+        super(x, y, 100, 100, ReadImage.MonsterTwo);
+        this.speed = 4;
     }
 
     public MonsterTwo(int x, int y, int speed) {
@@ -28,7 +28,7 @@ public class MonsterTwo extends Sprite implements Monster {
         // MonsterTwo的设定是会上下移动
         this.x -= speed;
         if (isGoAhead) {
-            if (this.y + speed < GameScreen.getHei()) {
+            if (this.y + speed <= GameScreen.getHei() - 100) {
                 this.y += speed;
             } else {
                 isGoAhead = false;

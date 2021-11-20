@@ -10,9 +10,9 @@ import com.nju.edu.util.ReadImage;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.awt.event.KeyListener;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Zyi
  */
-public class GameController extends JPanel {
+public class GameController extends JPanel implements Runnable {
 
     /**
      * 游戏的时间
@@ -33,7 +33,7 @@ public class GameController extends JPanel {
     /**
      * 游戏的状态
      */
-    public static GameState STATE = GameState.START;
+    public static GameState STATE = GameState.RUNNING;
     /**
      * 用一个线程池来管理妖精的出现
      */
@@ -50,97 +50,196 @@ public class GameController extends JPanel {
     private List<CalabashBullet> calabashBulletList;
 
     private boolean isExited = false;
-    Input input;
+    private CalabashThread calabashThread = new CalabashThread();
 
     public GameController() {
-        this.input = new Input();
         this.monsterOneList = new ArrayList<>();
         this.monsterTwoList = new ArrayList<>();
         this.monsterThreeList = new ArrayList<>();
         this.monsterBulletList = new ArrayList<>();
         this.calabashBulletList = new ArrayList<>();
-        this.calabash = Calabash.getCalabash();
+        this.calabash = new Calabash(0, 0);
 
-        input.init();
-        this.addKeyListener(input);
+        this.addKeyListener(calabashThread);
 
         resetBoard();
 
-        Thread gameThread = new Thread(new GameThread());
-        gameThread.start();
+        executor.execute(calabashThread);
+        executor.execute(new MonsterThread());
+        executor.execute(this);
 
-//        executor.execute(new CalabashThread());
-//        executor.execute(new MonsterThread());
-//        executor.execute(this);
-//
-//        executor.shutdown();
+        executor.shutdown();
     }
 
-    private class GameThread implements Runnable {
+    @Override
+    public void run() {
+        while (!isExited) {
+            monsterCollision();
+            calabashCollision();
 
+            addTime();
+            try {
+                TimeUnit.MILLISECONDS.sleep(40);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            repaint();
+        }
+    }
+
+    private void monsterCollision() {
+        // 检查妖精1是否被葫芦娃打到
+        // 敌方没有血量，直接死亡
+        // TODO: 这里三个循环可以抽象一个方法
+        int calabashBulletLength = calabashBulletList.size();
+        int monsterOneLength = monsterOneList.size();
+
+        for (int i = 0; i < monsterOneLength; i++) {
+            MonsterOne monsterOne = monsterOneList.get(i);
+            for (int j = 0; j < calabashBulletLength; j++) {
+                CalabashBullet bullet = calabashBulletList.get(j);
+                if (GameObject.isCollide(monsterOne, bullet)) {
+                    calabashBulletList.remove(bullet);
+                    monsterOneList.remove(monsterOne);
+
+                    // 第一类妖精的分数设置为10分
+                    score += 10;
+                    scoreLabel.setText("Score: " + score);
+                    monsterOneLength--;
+                    calabashBulletLength--;
+                    // 返回妖精的上一个位置
+                    i--;
+                    // 碰撞了就可以跳出循环了
+                    break;
+                }
+            }
+        }
+
+        int monsterTwoLength = monsterTwoList.size();
+
+        for (int i = 0; i < monsterTwoLength; i++) {
+            MonsterTwo monsterTwo = monsterTwoList.get(i);
+            for (int j = 0; j < calabashBulletLength; j++) {
+                CalabashBullet bullet = calabashBulletList.get(j);
+                if (GameObject.isCollide(monsterTwo, bullet)) {
+                    calabashBulletList.remove(bullet);
+                    monsterTwoList.remove(monsterTwo);
+
+                    // 第二类妖精的分数设置为20分
+                    score += 20;
+                    scoreLabel.setText("Score: " + score);
+                    monsterTwoLength--;
+                    calabashBulletLength--;
+                    i--;
+                    break;
+                }
+            }
+        }
+
+        int monsterThreeLength = monsterThreeList.size();
+
+        for (int i = 0; i < monsterThreeLength; i++) {
+            MonsterThree monsterThree = monsterThreeList.get(i);
+            for (int j = 0; j < calabashBulletLength; j++) {
+                CalabashBullet bullet = calabashBulletList.get(j);
+                if (GameObject.isCollide(monsterThree, bullet)) {
+                    calabashBulletList.remove(bullet);
+                    monsterThreeList.remove(monsterThree);
+
+                    // 第三类妖精的分数设置为30分
+                    score += 30;
+                    scoreLabel.setText("Score: " + score);
+                    monsterThreeLength--;
+                    calabashBulletLength--;
+                    i--;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void calabashCollision() {
+        // 妖精子弹和葫芦娃的碰撞
+        int monsterBulletLength = monsterBulletList.size();
+        for (int i = 0; i < monsterBulletLength; i++) {
+            MonsterBullet bullet = monsterBulletList.get(i);
+            if (GameObject.isCollide(bullet, calabash)) {
+                monsterBulletList.remove(bullet);
+                monsterBulletLength--;
+                // 一次造成的伤害为5点
+                // TODO:改成不同的妖精有不同的伤害
+                calabash.decreaseHP(5);
+                if (calabash.getHP() >= 0) {
+                    HPLabel.setText("HP: " + calabash.getHP());
+                } else {
+                    HPLabel.setText("HP: " + 0);
+                }
+                if (calabash.getHP() <= 0) {
+                    // 死亡，结束
+                    STATE = GameState.GAME_OVER;
+                }
+            }
+        }
+    }
+
+    private class CalabashThread implements Runnable, KeyListener {
         private Thread thread = Thread.currentThread();
 
-        public GameThread() {
-            System.out.println("[GameThread]created");
+        /**
+         * 用一个HashMap来存储某个按键是否被按下
+         */
+        private Map<Integer, Boolean> keys;
+        /**
+         * 记录存放的按键数量
+         */
+        public final static int KEY_COUNTS = 1000;
+
+        public CalabashThread() {
+            System.out.println("[CalabashThead]created");
+            init();
         }
 
         @Override
         public void run() {
-            System.out.println(thread.getName() + " start executing.");
+            // 葫芦娃的移动，攻击，监听键盘事件
             while (!isExited) {
                 moving();
-                if (STATE == GameState.RUNNING) {
-                    // 敌机的移动
-                    monsterMove(TIME);
-                    // 英雄机子弹的移动
-                    calabashBulletMove(TIME);
-                    // 敌机子弹的移动
-                    monsterBulletMove(TIME);
-                    // 生成敌机
-                    monsterAppear(TIME);
-                    // 生成敌机子弹
-                    monsterFire(TIME);
-                    monsterCollision();
-                    calabashCollision();
+                calabashBulletMove(TIME);
 
-                    // 时间的递增
-                    addTime();
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(40);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    repaint();
+                addTime();
+                try {
+                    TimeUnit.MILLISECONDS.sleep(40);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+
+                repaint();
             }
         }
 
         public void moving() {
             // 监听一下键盘的事件
-            if (Input.getKeyDown(KeyEvent.VK_W) || Input.getKeyDown(KeyEvent.VK_UP)) {
+            if (getKeyDown(KeyEvent.VK_W) || getKeyDown(KeyEvent.VK_UP)) {
                 // 向上走y值减小
                 // 判断会不会走出边界
                 calabash.moveUp();
-            } else if (Input.getKeyDown(KeyEvent.VK_S) || Input.getKeyDown(KeyEvent.VK_DOWN)) {
+            } else if (getKeyDown(KeyEvent.VK_S) || getKeyDown(KeyEvent.VK_DOWN)) {
                 // 向下走y值增大
                 // 判断会不会走出边界
                 calabash.moveDown();
-            } else if (Input.getKeyDown(KeyEvent.VK_A) || Input.getKeyDown(KeyEvent.VK_LEFT)) {
+            } else if (getKeyDown(KeyEvent.VK_A) || getKeyDown(KeyEvent.VK_LEFT)) {
                 // 向左走x值减小
                 // 判断会不会走出边界
                 calabash.moveLeft();
-            } else if (Input.getKeyDown(KeyEvent.VK_D) || Input.getKeyDown(KeyEvent.VK_RIGHT)) {
+            } else if (getKeyDown(KeyEvent.VK_D) || getKeyDown(KeyEvent.VK_RIGHT)) {
                 // 向右走x值增大
                 // 判断会不会走出边界
                 calabash.moveRight();
-            } else if (Input.getKeyDown(KeyEvent.VK_J)) {
+            } else if (getKeyDown(KeyEvent.VK_J)) {
                 // 按j发射子弹
                 CalabashBullet bullet = calabash.calabashFire();
-                if (TIME % 200 == 0) {
-                    calabashBulletList.add(bullet);
-                }
-            } else if (Input.getKeyDown(KeyEvent.VK_ENTER)) {
+                calabashBulletList.add(bullet);
+            } else if (getKeyDown(KeyEvent.VK_ENTER)) {
                 if (GameController.STATE == GameState.START) {
                     STATE = GameState.RUNNING;
                 } else if (GameController.STATE == GameState.GAME_OVER) {
@@ -150,110 +249,64 @@ public class GameController extends JPanel {
             }
         }
 
-        public void restart() {
-            monsterOneList.clear();
-            monsterTwoList.clear();
-            monsterThreeList.clear();
-            monsterBulletList.clear();
-            calabashBulletList.clear();
-            STATE = GameState.START;
-            score = 0;
-            calabash.resetHP();
-            resetBoard();
-        }
-
-        private void monsterCollision() {
-            // 检查妖精1是否被葫芦娃打到
-            // 敌方没有血量，直接死亡
-            // TODO: 这里三个循环可以抽象一个方法
-            int calabashBulletLength = calabashBulletList.size();
-            int monsterOneLength = monsterOneList.size();
-
-            for (int i = 0; i < monsterOneLength; i++) {
-                MonsterOne monsterOne = monsterOneList.get(i);
-                for (int j = 0; j < calabashBulletLength; j++) {
-                    CalabashBullet bullet = calabashBulletList.get(j);
-                    if (GameObject.isCollide(monsterOne, bullet)) {
-                        calabashBulletList.remove(bullet);
-                        monsterOneList.remove(monsterOne);
-
-                        // 第一类妖精的分数设置为10分
-                        score += 10;
-                        scoreLabel.setText("Score: " + score);
-                        monsterOneLength--;
-                        calabashBulletLength--;
-                        // 返回妖精的上一个位置
-                        i--;
-                        // 碰撞了就可以跳出循环了
-                        break;
-                    }
-                }
-            }
-
-            int monsterTwoLength = monsterTwoList.size();
-
-            for (int i = 0; i < monsterTwoLength; i++) {
-                MonsterTwo monsterTwo = monsterTwoList.get(i);
-                for (int j = 0; j < calabashBulletLength; j++) {
-                    CalabashBullet bullet = calabashBulletList.get(j);
-                    if (GameObject.isCollide(monsterTwo, bullet)) {
-                        calabashBulletList.remove(bullet);
-                        monsterTwoList.remove(monsterTwo);
-
-                        // 第二类妖精的分数设置为20分
-                        score += 20;
-                        scoreLabel.setText("Score: " + score);
-                        monsterTwoLength--;
-                        calabashBulletLength--;
-                        i--;
-                        break;
-                    }
-                }
-            }
-
-            int monsterThreeLength = monsterThreeList.size();
-
-            for (int i = 0; i < monsterThreeLength; i++) {
-                MonsterThree monsterThree = monsterThreeList.get(i);
-                for (int j = 0; j < calabashBulletLength; j++) {
-                    CalabashBullet bullet = calabashBulletList.get(j);
-                    if (GameObject.isCollide(monsterThree, bullet)) {
-                        calabashBulletList.remove(bullet);
-                        monsterThreeList.remove(monsterThree);
-
-                        // 第三类妖精的分数设置为30分
-                        score += 30;
-                        scoreLabel.setText("Score: " + score);
-                        monsterThreeLength--;
-                        calabashBulletLength--;
-                        i--;
-                        break;
-                    }
-                }
+        public void calabashBulletMove(long time) {
+            for (CalabashBullet bullet : calabashBulletList) {
+                bullet.move(time);
             }
         }
 
-        private void calabashCollision() {
-            // 妖精子弹和葫芦娃的碰撞
-            int monsterBulletLength = monsterBulletList.size();
-            for (int i = 0; i < monsterBulletLength; i++) {
-                MonsterBullet bullet = monsterBulletList.get(i);
-                if (GameObject.isCollide(bullet, calabash)) {
-                    monsterBulletList.remove(bullet);
-                    monsterBulletLength--;
-                    // 一次造成的伤害为5点
-                    // TODO:改成不同的妖精有不同的伤害
-                    calabash.decreaseHP(5);
-                    if (calabash.getHP() >= 0) {
-                        HPLabel.setText("HP: " + calabash.getHP());
-                    } else {
-                        HPLabel.setText("HP: " + 0);
-                    }
-                    if (calabash.getHP() <= 0) {
-                        // 死亡，结束
-                        STATE = GameState.GAME_OVER;
-                    }
+        public void init() {
+            keys = new HashMap<>(KEY_COUNTS);
+            for (int i = 0; i < KEY_COUNTS; i++) {
+                keys.put(i, false);
+            }
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+
+        }
+
+        @Override
+        public void keyPressed(KeyEvent key) {
+            // 当有某个按键被按下时
+            keys.put(key.getKeyCode(), true);
+        }
+
+        @Override
+        public void keyReleased(KeyEvent key) {
+            // 当有某个按键松开时
+            keys.put(key.getKeyCode(), false);
+        }
+
+        public boolean getKeyDown(int keyCode) {
+            return keys.get(keyCode);
+        }
+    }
+
+    private class MonsterThread implements Runnable {
+        private Thread thread = Thread.currentThread();
+
+        public MonsterThread() {
+            System.out.println("[MonsterThread]created");
+        }
+
+        @Override
+        public void run() {
+            while (!isExited) {
+                monsterMove(TIME);
+                monsterBulletMove(TIME);
+                monsterAppear(TIME);
+                monsterFire(TIME);
+
+                addTime();
+                try {
+                    TimeUnit.MILLISECONDS.sleep(40);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+
+                repaint();
             }
         }
 
@@ -279,11 +332,11 @@ public class GameController extends JPanel {
             }
         }
 
-        private static final int FIRE_INTERVAL_ONE = 2000;
-        private static final int FIRE_INTERVAL_TWO = 3000;
-        private static final int FIRE_INTERVAL_THREE = 1000;
-        private static final int MONSTER_ONE_APPEAR = 400;
-        private static final int MONSTER_TWO_APPEAR = 600;
+        private static final int FIRE_INTERVAL_ONE = 3000;
+        private static final int FIRE_INTERVAL_TWO = 4000;
+        private static final int FIRE_INTERVAL_THREE = 4000;
+        private static final int MONSTER_ONE_APPEAR = 2000;
+        private static final int MONSTER_TWO_APPEAR = 2000;
         private static final int MONSTER_THREE_APPEAR = 1000;
 
         /**
@@ -319,31 +372,37 @@ public class GameController extends JPanel {
             Random random = new Random();
             // 妖精一出现的时间
             if (time % MONSTER_ONE_APPEAR == 0) {
-                MonsterOne monsterOne = new MonsterOne(GameScreen.getWid(), random.nextInt(GameScreen.getHei()));
+                MonsterOne monsterOne = new MonsterOne(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 100));
                 monsterOneList.add(monsterOne);
             }
             // 妖精二出现的时间
             if (time % MONSTER_TWO_APPEAR == 0) {
-                MonsterTwo monsterTwo = new MonsterTwo(GameScreen.getWid(), random.nextInt(GameScreen.getHei()));
+                MonsterTwo monsterTwo = new MonsterTwo(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 100));
                 monsterTwoList.add(monsterTwo);
             }
             if (time % MONSTER_THREE_APPEAR == 0) {
-                MonsterThree monsterThree = new MonsterThree(GameScreen.getWid(), random.nextInt(GameScreen.getHei()));
+                MonsterThree monsterThree = new MonsterThree(GameScreen.getWid(), random.nextInt(GameScreen.getHei() - 150));
                 monsterThreeList.add(monsterThree);
             }
         }
+    }
 
-        public void calabashBulletMove(long time) {
-            for (CalabashBullet bullet : calabashBulletList) {
-                bullet.move(time);
-            }
-        }
+    public void restart() {
+        monsterOneList.clear();
+        monsterTwoList.clear();
+        monsterThreeList.clear();
+        monsterBulletList.clear();
+        calabashBulletList.clear();
+        STATE = GameState.START;
+        score = 0;
+        calabash.resetHP();
+        resetBoard();
     }
 
     private void resetBoard() {
         // 清空JPanel里的所有内容
         this.removeAll();
-        this.addKeyListener(input);
+        this.addKeyListener(calabashThread);
 
         // 初始化一些Label
         scoreLabel = new JLabel("Score: " + this.score);
@@ -390,7 +449,7 @@ public class GameController extends JPanel {
         this.add(labelPanel);
     }
 
-    private void addTime() {
+    private synchronized void addTime() {
         TIME += 40;
     }
 
@@ -403,18 +462,18 @@ public class GameController extends JPanel {
             paintStart(g);
             // 如果为游戏运行状态
         } else if (STATE == GameState.RUNNING) {
-            // 绘制英雄机
+            // 绘制葫芦娃
             paintCalabash(g);
-            // 绘制敌机
+            // 绘制妖精
             paintMonster(g);
-            // 绘制一组敌机子弹
+            // 绘制一组妖精子弹
             paintMonsterBullets(g);
-            // 绘制英雄机子弹
+            // 绘制葫芦娃的子弹
             paintCalabashBullets(g);
         } else if (STATE == GameState.PAUSE) {
             g.setFont(new Font("黑体", Font.BOLD, 50));
             g.setColor(Color.RED);
-            g.drawString("游戏暂停!!!", 120, 330);
+            g.drawString("游戏暂停!!!", 400, 400);
         }
     }
 

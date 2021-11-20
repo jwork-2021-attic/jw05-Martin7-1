@@ -9,7 +9,7 @@ import com.nju.edu.util.ReadImage;
 public class MonsterThree extends Sprite implements Monster {
 
     public MonsterThree(int x, int y) {
-        super(x, y, 50, 50, ReadImage.MonsterThree);
+        super(x, y, 150, 150, ReadImage.MonsterThree);
         this.speed = 2;
     }
 

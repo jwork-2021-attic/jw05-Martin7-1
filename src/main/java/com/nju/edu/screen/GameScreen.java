@@ -83,31 +83,4 @@ public class GameScreen extends JFrame {
         return true;
     }
 
-//    @Override
-//    public void paint(Graphics g) {
-//        // 每次绘制前我们需要将当前画布上的所有内容先清除
-//        // 双缓冲
-//        // 在内存里创建一个和窗口长宽一样的图片(画布)
-//        Image img = this.createImage(WIDTH, HEIGHT);
-//        // 获得画布的Graphics
-//        Graphics tempGraphics = img.getGraphics();
-//        // 将画布清除为背景色
-//        clear(tempGraphics);
-//
-//        // 渲染所有的sprite
-//        for (GameObject gameObject : gameObjects) {
-//            gameObject.onTick();
-//            //在画布上画出每个物体
-//            gameObject.draw(tempGraphics);
-//        }
-//
-//        //将内存画布的内容复制回窗口上
-//        g.drawImage(img, 0, 0, null);
-//    }
-//
-//    public void clear(Graphics g) {
-//        g.setColor(bgColor);
-//        g.fillRect(0, 0, WIDTH, HEIGHT);
-//    }
-
 }
