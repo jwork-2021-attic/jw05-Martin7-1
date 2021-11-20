@@ -336,11 +336,11 @@ public class GameController extends JPanel implements Runnable {
             }
         }
 
-        private static final int FIRE_INTERVAL_ONE = 4000;
-        private static final int FIRE_INTERVAL_TWO = 6000;
-        private static final int FIRE_INTERVAL_THREE = 15000;
-        private static final int MONSTER_ONE_APPEAR = 3000;
-        private static final int MONSTER_TWO_APPEAR = 4000;
+        private static final int FIRE_INTERVAL_ONE = 2000;
+        private static final int FIRE_INTERVAL_TWO = 4000;
+        private static final int FIRE_INTERVAL_THREE = 6000;
+        private static final int MONSTER_ONE_APPEAR = 4000;
+        private static final int MONSTER_TWO_APPEAR = 6000;
         private static final int MONSTER_THREE_APPEAR = 8000;
 
         /**
@@ -466,7 +466,7 @@ public class GameController extends JPanel implements Runnable {
         this.add(labelPanel);
     }
 
-    private synchronized void addTime() {
+    private void addTime() {
         TIME += 20;
     }
 
@@ -501,7 +501,7 @@ public class GameController extends JPanel implements Runnable {
         } else if (STATE == GameState.PAUSE) {
             g.setFont(new Font("黑体", Font.BOLD, 50));
             g.setColor(Color.WHITE);
-            g.drawString("游戏暂停!!!", 400, 350);
+            g.drawString("游戏暂停", 450, 320);
         } else if (STATE == GameState.GAME_OVER) {
             // paintOver(g);
         }
