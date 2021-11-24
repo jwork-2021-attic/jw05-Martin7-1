@@ -17,6 +17,11 @@ public class Calabash extends Sprite {
     }
 
     public Skill skill;
+    private boolean isFirstUse = true;
+    /**
+     * 葫芦娃的血量
+     */
+    public int HP = 100;
 
     private Calabash(int x, int y) {
         super(x, y, 100, 100, ReadImage.Calabash);
@@ -27,11 +32,6 @@ public class Calabash extends Sprite {
         super(x, y, 100, 100, ReadImage.Calabash);
         this.speed = speed;
     }
-
-    /**
-     * 葫芦娃的血量
-     */
-    public int HP = 100;
 
     public void moveUp() {
         if (this.y - speed >= 0) {
@@ -78,16 +78,33 @@ public class Calabash extends Sprite {
         this.HP -= damage;
     }
 
+    public void recover() {
+        if (this.HP + 10 > 100) {
+            this.HP = 100;
+        } else {
+            this.HP += 10;
+        }
+    }
+
     public void resetHP() {
         this.HP = 100;
     }
 
     public boolean haveSkill() {
-        return this.skill == null;
+        return this.skill != null;
     }
 
     public void useSkill() {
+        System.out.println("Use skill: " + this.skill.getName());
         this.skill.start();
+    }
+
+    public boolean isFirstUse() {
+        return this.isFirstUse;
+    }
+
+    public void setFirstUse() {
+        isFirstUse = !isFirstUse;
     }
 
     public void setSkill(Skill skill) {
@@ -97,5 +114,20 @@ public class Calabash extends Sprite {
     public Skill getCurSkill() {
         // 获得当前拥有的技能
         return this.skill;
+    }
+
+    public void speedUp(boolean haveSkill) {
+        if (haveSkill) {
+            // 加速
+            this.speed += 5;
+        }
+    }
+
+    public int getSpeed() {
+        return this.speed;
+    }
+
+    public void clearSkillImpact() {
+        this.speed += 5;
     }
 }

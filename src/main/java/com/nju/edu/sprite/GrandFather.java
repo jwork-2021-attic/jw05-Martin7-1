@@ -25,6 +25,13 @@ public class GrandFather extends Sprite {
         super(x, y, 100, 100, ReadImage.GrandFather);
     }
 
+    /**
+     * 给予技能的次数
+     */
+    private int giveTime = 0;
+    private Calabash calabash = Calabash.getInstance();
+    private int speed = calabash.getSpeed();
+
     public void moveUp() {
         if (this.y - speed >= 0) {
             this.y -= speed;
@@ -50,12 +57,6 @@ public class GrandFather extends Sprite {
     }
 
     /**
-     * 给予技能的次数
-     */
-    private int giveTime = 0;
-    private Calabash calabash = Calabash.getInstance();
-
-    /**
      * 给予葫芦娃一个技能
      */
     public void giveSkill() {
@@ -70,4 +71,13 @@ public class GrandFather extends Sprite {
         this.giveTime++;
     }
 
+    public void speedUp(boolean isSpeedUp) {
+        if (isSpeedUp) {
+            this.speed += 5;
+        }
+    }
+
+    public void clearSkillImpact() {
+
+    }
 }

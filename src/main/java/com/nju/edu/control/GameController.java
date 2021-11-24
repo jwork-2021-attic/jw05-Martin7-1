@@ -6,6 +6,7 @@ import com.nju.edu.screen.GameScreen;
 import com.nju.edu.sprite.*;
 import com.nju.edu.util.GameState;
 import com.nju.edu.util.ReadImage;
+import com.nju.edu.util.TimeControl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,7 @@ public class GameController extends JPanel implements Runnable {
     /**
      * 游戏的状态
      */
-    public static GameState STATE = GameState.START;
+    public static GameState STATE = GameState.RUNNING;
     /**
      * 用一个线程池来管理妖精的出现
      */
@@ -48,6 +49,7 @@ public class GameController extends JPanel implements Runnable {
     private JLabel skillLabel;
 
     private Calabash calabash;
+    private GrandFather grandFather;
     private List<MonsterOne> monsterOneList;
     private List<MonsterTwo> monsterTwoList;
     private List<MonsterThree> monsterThreeList;
@@ -70,7 +72,9 @@ public class GameController extends JPanel implements Runnable {
         resetBoard();
 
         executor.execute(calabashThread);
+        executor.execute(new GrandfatherThread());
         executor.execute(new MonsterThread());
+        executor.execute(new TimeControl());
         executor.execute(this);
 
         executor.shutdown();
@@ -82,11 +86,10 @@ public class GameController extends JPanel implements Runnable {
             monsterCollision();
             calabashCollision();
 
-            addTime();
             try {
                 TimeUnit.MILLISECONDS.sleep(40);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
             repaint();
         }
@@ -197,7 +200,8 @@ public class GameController extends JPanel implements Runnable {
         /**
          * 记录存放的按键数量
          */
-        public final static int KEY_COUNTS = 1000;
+        private final static int KEY_COUNTS = 1000;
+        private static final int FIRE_INTERVAL = 80;
 
         public CalabashThread() {
             System.out.println("[CalabashThead]created");
@@ -211,13 +215,11 @@ public class GameController extends JPanel implements Runnable {
                 moving();
                 calabashBulletMove(TIME);
 
-                addTime();
                 try {
                     TimeUnit.MILLISECONDS.sleep(40);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
-
                 repaint();
             }
         }
@@ -228,22 +230,26 @@ public class GameController extends JPanel implements Runnable {
                 // 向上走y值减小
                 // 判断会不会走出边界
                 calabash.moveUp();
+                grandFather.moveUp();
             } else if (getKeyDown(KeyEvent.VK_S) || getKeyDown(KeyEvent.VK_DOWN)) {
                 // 向下走y值增大
                 // 判断会不会走出边界
                 calabash.moveDown();
+                grandFather.moveDown();
             } else if (getKeyDown(KeyEvent.VK_A) || getKeyDown(KeyEvent.VK_LEFT)) {
                 // 向左走x值减小
                 // 判断会不会走出边界
                 calabash.moveLeft();
+                grandFather.moveLeft();
             } else if (getKeyDown(KeyEvent.VK_D) || getKeyDown(KeyEvent.VK_RIGHT)) {
                 // 向右走x值增大
                 // 判断会不会走出边界
                 calabash.moveRight();
+                grandFather.moveRight();
             } else if (getKeyDown(KeyEvent.VK_J)) {
                 // 按j发射子弹
                 CalabashBullet bullet = calabash.calabashFire();
-                if (TIME % 80 == 0) {
+                if (TIME % FIRE_INTERVAL == 0) {
                     calabashBulletList.add(bullet);
                 }
             } else if (getKeyDown(KeyEvent.VK_ENTER)) {
@@ -255,8 +261,14 @@ public class GameController extends JPanel implements Runnable {
                 }
             } else if (getKeyDown(KeyEvent.VK_X)) {
                 // 按x使用技能
-                if (calabash.haveSkill()) {
+                if (calabash.haveSkill() && calabash.isFirstUse()) {
                     calabash.useSkill();
+                    // 只能够使用一次技能
+                    calabash.setFirstUse();
+                    if ("RecoverSkill".equals(calabash.getCurSkill().getName())) {
+                        // 更改血量的显示
+                        HPLabel.setText("HP: " + calabash.getHP());
+                    }
                 }
             }
         }
@@ -300,6 +312,7 @@ public class GameController extends JPanel implements Runnable {
         private Thread thread = Thread.currentThread();
 
         public MonsterThread() {
+            // test
             System.out.println("[MonsterThread]created");
         }
 
@@ -311,13 +324,11 @@ public class GameController extends JPanel implements Runnable {
                 monsterAppear(TIME);
                 monsterFire(TIME);
 
-                addTime();
                 try {
                     TimeUnit.MILLISECONDS.sleep(40);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
-
                 repaint();
             }
         }
@@ -405,6 +416,44 @@ public class GameController extends JPanel implements Runnable {
         }
     }
 
+    private class GrandfatherThread implements Runnable {
+        private Thread thread = Thread.currentThread();
+
+        private static final int GIVE_SKILL_INTERVAL = 4000;
+
+        public GrandfatherThread() {
+            // test
+            System.out.println("[GrandfatherThread]created");
+        }
+
+        @Override
+        public void run() {
+            while (!isExited) {
+                // 根据时间的间隔给予葫芦娃技能
+                if (TIME % GIVE_SKILL_INTERVAL == 0) {
+                    // 清空moveSkill和cdSkill的效果
+                    calabash.clearSkillImpact();
+                    grandFather.giveSkill();
+                    skillLabel.setText(calabash.getCurSkill().getName());
+                    calabash.setFirstUse();
+                }
+
+                try {
+                    TimeUnit.MILLISECONDS.sleep(40);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        /**
+         * 自动跟随葫芦娃移动
+         */
+        private void autoMove() {
+
+        }
+    }
+
     private boolean isInGameScreen(GameObject gameObject) {
         return gameObject.getX() + 150 <= GameScreen.getWid() && gameObject.getY() + 150 <= GameScreen.getHei();
     }
@@ -428,12 +477,15 @@ public class GameController extends JPanel implements Runnable {
 
         // 葫芦娃的初始位置
         calabash = Calabash.getInstance();
+        grandFather = GrandFather.getInstance();
 
         // 初始化一些Label
         scoreLabel = new JLabel("Score: " + this.score);
         scoreLabel.setForeground(Color.RED);
         HPLabel = new JLabel("HP: " + calabash.getHP());
         HPLabel.setForeground(Color.RED);
+        skillLabel = new JLabel("Skill: null");
+        skillLabel.setForeground(Color.RED);
 
         // 游戏继续按钮
         final JButton goOnButton = new JButton("继续");
@@ -468,13 +520,14 @@ public class GameController extends JPanel implements Runnable {
         labelPanel.setLayout(new FlowLayout(FlowLayout.LEADING, 30, 10));
         labelPanel.add(scoreLabel);
         labelPanel.add(HPLabel);
+        labelPanel.add(skillLabel);
         labelPanel.add(goOnButton);
         labelPanel.add(stopButton);
         // JPanel 面板添加这个面板
         this.add(labelPanel);
     }
 
-    private void addTime() {
+    public static void addTime() {
         TIME += 20;
     }
 
@@ -492,7 +545,9 @@ public class GameController extends JPanel implements Runnable {
     @Override
     public void paint(Graphics g) {
         // TODO: 绘制所有物体
+        // TODO: 双缓冲
         super.paint(g);
+
         // 如果为初始状态
         if (STATE == GameState.START) {
             paintStart(g);
@@ -502,6 +557,8 @@ public class GameController extends JPanel implements Runnable {
             paintCalabash(g);
             // 绘制妖精
             paintMonster(g);
+            // 绘制爷爷
+            paintGrandfather(g);
             // 绘制一组妖精子弹
             paintMonsterBullets(g);
             // 绘制葫芦娃的子弹
@@ -533,6 +590,10 @@ public class GameController extends JPanel implements Runnable {
 
     private void paintCalabash(Graphics g) {
         g.drawImage(ReadImage.Calabash, calabash.getX(), calabash.getY(), 100, 100, null);
+    }
+
+    private void paintGrandfather(Graphics g) {
+        g.drawImage(ReadImage.GrandFather, grandFather.getX(), grandFather.getY(), 100, 100, null);
     }
 
     private void paintMonster(Graphics g) {
