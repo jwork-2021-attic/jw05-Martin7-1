@@ -35,7 +35,7 @@ public class GameController extends JPanel implements Runnable {
     /**
      * 游戏的状态
      */
-    public static GameState STATE = GameState.RUNNING;
+    public static GameState STATE = GameState.START;
     /**
      * 用一个线程池来管理妖精的出现
      */
@@ -55,6 +55,7 @@ public class GameController extends JPanel implements Runnable {
     private List<MonsterThree> monsterThreeList;
     private List<MonsterBullet> monsterBulletList;
     private List<CalabashBullet> calabashBulletList;
+    // TODO: boom
 
     private boolean isExited = false;
     private CalabashThread calabashThread = new CalabashThread();
@@ -201,7 +202,7 @@ public class GameController extends JPanel implements Runnable {
          * 记录存放的按键数量
          */
         private final static int KEY_COUNTS = 1000;
-        private static final int FIRE_INTERVAL = 80;
+
 
         public CalabashThread() {
             System.out.println("[CalabashThead]created");
@@ -249,7 +250,7 @@ public class GameController extends JPanel implements Runnable {
             } else if (getKeyDown(KeyEvent.VK_J)) {
                 // 按j发射子弹
                 CalabashBullet bullet = calabash.calabashFire();
-                if (TIME % FIRE_INTERVAL == 0) {
+                if (TIME % calabash.getFireInterval() == 0) {
                     calabashBulletList.add(bullet);
                 }
             } else if (getKeyDown(KeyEvent.VK_ENTER)) {
@@ -355,12 +356,12 @@ public class GameController extends JPanel implements Runnable {
             }
         }
 
-        private static final int FIRE_INTERVAL_ONE = 2000;
-        private static final int FIRE_INTERVAL_TWO = 4000;
-        private static final int FIRE_INTERVAL_THREE = 6000;
-        private static final int MONSTER_ONE_APPEAR = 4000;
-        private static final int MONSTER_TWO_APPEAR = 6000;
-        private static final int MONSTER_THREE_APPEAR = 8000;
+        private static final int FIRE_INTERVAL_ONE = 1000;
+        private static final int FIRE_INTERVAL_TWO = 2000;
+        private static final int FIRE_INTERVAL_THREE = 3000;
+        private static final int MONSTER_ONE_APPEAR = 2000;
+        private static final int MONSTER_TWO_APPEAR = 4000;
+        private static final int MONSTER_THREE_APPEAR = 4000;
 
         /**
          * 妖精发射子弹的时间
@@ -433,6 +434,7 @@ public class GameController extends JPanel implements Runnable {
                 if (TIME % GIVE_SKILL_INTERVAL == 0) {
                     // 清空moveSkill和cdSkill的效果
                     calabash.clearSkillImpact();
+                    grandFather.clearSkillImpact();
                     grandFather.giveSkill();
                     skillLabel.setText(calabash.getCurSkill().getName());
                     calabash.setFirstUse();
@@ -444,13 +446,6 @@ public class GameController extends JPanel implements Runnable {
                     throw new RuntimeException(e);
                 }
             }
-        }
-
-        /**
-         * 自动跟随葫芦娃移动
-         */
-        private void autoMove() {
-
         }
     }
 
@@ -579,8 +574,9 @@ public class GameController extends JPanel implements Runnable {
         g.setFont(font);
         g.drawString("按ENTER键开始游戏", 50, 500);
         g.drawString("J:发射子弹", 50, 550);
-        g.drawString("方向键:↑,↓,←,→", 50, 600);
-        g.drawString("作者:Martin", 50, 650);
+        g.drawString("X:使用技能", 50, 600);
+        g.drawString("方向键:↑,↓,←,→", 50, 650);
+        g.drawString("作者:Martin", 50, 700);
     }
 
     public void paintOver(Graphics g) {
