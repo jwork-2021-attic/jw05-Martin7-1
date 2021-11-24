@@ -7,6 +7,7 @@ package com.nju.edu.skill;
 public class MoveSkill implements Skill {
 
     private boolean haveSkill = false;
+    private final String skillName = "MoveSkill";
 
     @Override
     public boolean isHaveSkill() {
@@ -16,5 +17,14 @@ public class MoveSkill implements Skill {
     @Override
     public void haveSkill() {
         this.haveSkill = true;
+    }
+
+    @Override
+    public void start() {
+        // TODO
+    }
+
+    public String getSkillName() {
+        return this.skillName;
     }
 }

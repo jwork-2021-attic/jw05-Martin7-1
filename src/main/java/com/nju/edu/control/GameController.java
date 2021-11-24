@@ -42,6 +42,10 @@ public class GameController extends JPanel implements Runnable {
 
     private JLabel scoreLabel;
     private JLabel HPLabel;
+    /**
+     * 用于存放当前的技能
+     */
+    private JLabel skillLabel;
 
     private Calabash calabash;
     private List<MonsterOne> monsterOneList;
@@ -249,6 +253,9 @@ public class GameController extends JPanel implements Runnable {
                     STATE = GameState.RUNNING;
                     restart();
                 }
+            } else if (getKeyDown(KeyEvent.VK_X)) {
+                // 按x使用技能
+                calabash.useSkill();
             }
         }
 
@@ -418,7 +425,7 @@ public class GameController extends JPanel implements Runnable {
         this.addKeyListener(calabashThread);
 
         // 葫芦娃的初始位置
-        calabash = new Calabash(0, 320);
+        calabash = Calabash.getInstance();
 
         // 初始化一些Label
         scoreLabel = new JLabel("Score: " + this.score);

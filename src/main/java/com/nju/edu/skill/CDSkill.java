@@ -6,7 +6,8 @@ package com.nju.edu.skill;
  */
 public class CDSkill implements Skill{
 
-    boolean haveSkill = false;
+    private boolean haveSkill = false;
+    private final String skillName = "CDSkill";
 
     @Override
     public boolean isHaveSkill() {
@@ -18,5 +19,12 @@ public class CDSkill implements Skill{
         this.haveSkill = true;
     }
 
+    @Override
+    public void start() {
+        // TODO
+    }
 
+    public String getSkillName() {
+        return this.skillName;
+    }
 }
