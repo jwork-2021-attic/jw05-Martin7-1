@@ -10,7 +10,7 @@ import com.nju.edu.util.ReadImage;
  */
 public class Calabash extends Sprite {
 
-    private static final Calabash CALABASH = new Calabash(0, 320);
+    private static final Calabash CALABASH = new Calabash(100, 320);
 
     public static Calabash getInstance() {
         return CALABASH;
@@ -82,8 +82,16 @@ public class Calabash extends Sprite {
         this.HP = 100;
     }
 
+    public boolean haveSkill() {
+        return this.skill == null;
+    }
+
     public void useSkill() {
         this.skill.start();
+    }
+
+    public void setSkill(Skill skill) {
+        this.skill = skill;
     }
 
     public Skill getCurSkill() {
