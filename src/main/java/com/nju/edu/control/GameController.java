@@ -56,17 +56,21 @@ public class GameController extends JPanel implements Runnable {
     private List<MonsterThree> monsterThreeList;
     private List<MonsterBullet> monsterBulletList;
     private List<CalabashBullet> calabashBulletList;
-    // TODO: boom
+    // TODO
+    private List<Blast> blastList;
 
     private boolean isExited = false;
     private CalabashThread calabashThread = new CalabashThread();
 
     public GameController() {
+        // 并发容器的使用
+        // 线程安全的arrayList
         this.monsterOneList = new CopyOnWriteArrayList<>();
         this.monsterTwoList = new CopyOnWriteArrayList<>();
         this.monsterThreeList = new CopyOnWriteArrayList<>();
         this.monsterBulletList = new CopyOnWriteArrayList<>();
         this.calabashBulletList = new CopyOnWriteArrayList<>();
+        this.blastList = new CopyOnWriteArrayList<>();
 
         this.addKeyListener(calabashThread);
         this.requestFocus();
@@ -290,7 +294,7 @@ public class GameController extends JPanel implements Runnable {
 
         @Override
         public void keyTyped(KeyEvent e) {
-
+            // nothing to do
         }
 
         @Override
